@@ -3,572 +3,659 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Dashboard</title>
+    <title>Project Execution Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <style>
-        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 10; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
+        
+        .table-container { 
+            height: calc(100vh - 180px); 
+            overflow: auto; 
+            border-radius: 8px; 
+            background: #ffffff;
+            position: relative;
+        }
+        
+        table { 
+            border-collapse: separate; 
+            border-spacing: 0; 
+            width: 100%; 
+        }
+        
+        /* Sticky Headers */
+        thead tr:nth-child(1) th { 
+            position: sticky; 
+            top: 0; 
+            z-index: 40; 
+        }
+        thead tr:nth-child(2) th { 
+            position: sticky; 
+            top: 35px; 
+            z-index: 39; 
+        }
+
+        /* Sticky Left Column (Employee Details) */
+        .sticky-col { 
+            position: sticky; 
+            left: 0; 
+            background: #ffffff !important; 
+            border-right: 2px solid #e2e8f0 !important; 
+        }
+
+        /* Fixed Top-Left Corner Header Freeze */
+        th.sticky-col { 
+            z-index: 60 !important; 
+        }
+        tbody td.sticky-col { 
+            z-index: 20 !important; 
+        }
+        
+        th, td { 
+            padding: 9px 12px; 
+            border-right: 1px solid #f1f5f9; 
+            border-bottom: 1px solid #f1f5f9; 
+            white-space: nowrap; 
+        }
+        tbody tr:hover { background-color: #f8fafc; }
+        tbody tr:hover .sticky-col { background-color: #f8fafc !important; }
+
+        /* Metric Professional Color Palette */
+        .hdr-emp { background: #0f172a !important; color: #ffffff; }
+        
+        .hdr-fms { background: #1e3a8a !important; color: #ffffff; }
+        .sub-fms { background: #2563eb !important; color: #ffffff; }
         .bg-fms-cell { background-color: #eff6ff; }
+
+        .hdr-cl { background: #3b0764 !important; color: #ffffff; }
+        .sub-cl { background: #6b21a8 !important; color: #ffffff; }
         .bg-cl-cell { background-color: #faf5ff; }
+
+        .hdr-pm { background: #064e3b !important; color: #ffffff; }
+        .sub-pm { background: #047857 !important; color: #ffffff; }
         .bg-pm-cell { background-color: #ecfdf5; }
+
+        .hdr-act { background: #134e4a !important; color: #ffffff; }
+        .sub-act { background: #0f766e !important; color: #ffffff; }
         .bg-act-cell { background-color: #f0fdfa; }
-        .bg-score-cell { background-color: #f8fafc; }
+
+        .hdr-score { background: #78350f !important; color: #ffffff; }
+        .sub-score { background: #b45309 !important; color: #ffffff; }
+        .bg-score-cell { background-color: #fffbeb; }
+
+        #top-progress-bar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 3px;
+          background: #ef4444;
+          width: 0%;
+          transition: width 0.4s ease, opacity 0.3s ease;
+          z-index: 9999;
+          box-shadow: 0 0 10px #ef4444, 0 0 5px #ef4444;
+        }
+
+        @keyframes skeleton-shimmer {
+          0% { background-position: -200px 0; }
+          100% { background-position: calc(200px + 100%) 0; }
+        }
+
+        .skeleton-box {
+          display: inline-block;
+          height: 14px;
+          width: 80%;
+          background: #e2e8f0;
+          background-image: linear-gradient(90deg, #e2e8f0 0px, #f1f5f9 40px, #e2e8f0 80px);
+          background-size: 200px 100%;
+          background-repeat: no-repeat;
+          border-radius: 4px;
+          animation: skeleton-shimmer 1.2s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4">
+<body class="bg-slate-900 text-slate-800 font-sans antialiased">
 
-    <!-- LOGIN MODAL -->
-    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-white"><i class="fas fa-lock mr-2 text-blue-400"></i>Enter Email Access</h3>
-            <form onsubmit="handleEmailSubmit(event)">
-                <input type="email" id="modalEmailInput" placeholder="your.email@ashishinterbuild.com" required 
-                       class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white mb-4 focus:outline-none focus:border-blue-500">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg transition">Submit</button>
+    <!-- Header Navigation -->
+    <nav class="bg-slate-950 text-white p-3.5 sticky top-0 z-[100] border-b border-slate-800 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-3 max-w-[1920px] mx-auto">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600/20 border border-blue-500/30 rounded-lg">
+                    <i class="fas fa-chart-line text-blue-400 text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-black tracking-wider text-white uppercase italic">Project Execution Dashboard</h1>
+                    <div class="flex items-center gap-2">
+                        <p id="userDisplay" class="text-[11px] text-slate-400 font-mono">Logged in as: -</p>
+                        <button onclick="promptUserEmail()" class="text-[10px] text-blue-400 hover:underline font-semibold cursor-pointer"><i class="fas fa-user-edit mr-0.5"></i>Change</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters & Controls -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- Mode Switch -->
+                <select id="viewMode" onchange="handleViewModeChange()" class="bg-slate-800 text-xs px-3 py-2 rounded-lg border border-slate-700 text-blue-300 font-bold outline-none cursor-pointer focus:border-blue-500 transition-all">
+                    <option value="weekly">Weekly View</option>
+                    <option value="monthly">Monthly View</option>
+                    <option value="yearly">Yearly View</option>
+                </select>
+
+                <!-- Multi-Select Period Dropdown Container -->
+                <div class="relative" id="multiSelectContainer">
+                    <button id="multiSelectBtn" onclick="toggleMultiSelectMenu(event)" class="bg-slate-800 text-xs px-3 py-2 rounded-lg border border-slate-700 text-amber-400 font-semibold outline-none flex items-center gap-2 min-w-[140px] justify-between">
+                        <span id="multiSelectLabel">Select Period</span>
+                        <i class="fas fa-chevron-down text-[10px]"></i>
+                    </button>
+
+                    <!-- Dropdown Modal Menu -->
+                    <div id="multiSelectMenu" class="hidden absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[200] p-3 text-white">
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="periodSearch" placeholder="Search..." oninput="filterPeriodList()" class="bg-slate-800 text-xs pl-7 pr-2 py-1.5 rounded-lg border border-slate-700 text-white outline-none w-full">
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] mb-2 pb-2 border-b border-slate-800">
+                            <button onclick="selectAllPeriods()" class="text-blue-400 hover:text-blue-300 font-bold"><i class="fas fa-check-double mr-1"></i>Select All</button>
+                            <button onclick="clearAllPeriods()" class="text-rose-400 hover:text-rose-300 font-bold"><i class="fas fa-times mr-1"></i>Clear</button>
+                        </div>
+
+                        <div id="periodOptionsList" class="max-h-48 overflow-y-auto space-y-1 text-xs"></div>
+                    </div>
+                </div>
+
+                <!-- HOD Filter -->
+                <select id="hodFilter" onchange="renderDashboard()" class="bg-slate-800 text-xs px-3 py-2 rounded-lg border border-slate-700 text-slate-200 outline-none cursor-pointer focus:border-slate-500 transition-all">
+                    <option value="">All HODs</option>
+                </select>
+
+                <!-- Employee Search -->
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    <input type="text" id="nameSearch" placeholder="Search Employee..." oninput="renderDashboard()" class="bg-slate-800 text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-700 text-white outline-none w-40 focus:border-blue-500 transition-all">
+                </div>
+                
+                <!-- Sync Button -->
+                <button onclick="fetchData()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-600/30 flex items-center gap-2">
+                    <i class="fas fa-sync text-xs" id="refreshBtn"></i> SYNC
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Table Container -->
+    <main class="p-3 max-w-[1920px] mx-auto">
+        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="table-container">
+                <table class="text-xs">
+                    <thead>
+                        <tr>
+                            <th class="sticky-col hdr-emp text-left font-extrabold text-sm tracking-wide" rowspan="2">EMPLOYEE DETAILS</th>
+                            <th class="hdr-fms font-bold tracking-wider" colspan="4"><i class="fas fa-tasks mr-1"></i> FMS METRICS</th>
+                            <th class="hdr-cl font-bold tracking-wider" colspan="4"><i class="fas fa-check-double mr-1"></i> CHECKLIST METRICS</th>
+                            <th class="hdr-pm font-bold tracking-wider" colspan="3"><i class="fas fa-project-diagram mr-1"></i> PM METRICS</th>
+                            <th class="hdr-act font-bold tracking-wider" colspan="3"><i class="fas fa-running mr-1"></i> ACTIVITY METRICS</th>
+                            <th class="hdr-score font-bold tracking-wider" colspan="3"><i class="fas fa-star mr-1"></i> OVERALL SCORE</th>
+                        </tr>
+                        <tr class="text-[11px] font-extrabold uppercase tracking-wider">
+                            <th class="sub-fms">PLN</th><th class="sub-fms">ACT</th><th class="sub-fms">ACT%</th><th class="sub-fms">ND%</th>
+                            <th class="sub-cl">PLN</th><th class="sub-cl">ACT</th><th class="sub-cl">ACT%</th><th class="sub-cl">ND%</th>
+                            <th class="sub-pm">PLN QTY</th><th class="sub-pm">ACT QTY</th><th class="sub-pm">ACT%</th>
+                            <th class="sub-act">PLN QTY</th><th class="sub-act">ACT QTY</th><th class="sub-act">ACT%</th>
+                            <th class="sub-score">T.PLN</th><th class="sub-score">T.ACT</th><th class="sub-score">DONE%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable" class="divide-y divide-slate-100 font-medium">
+                        <tr><td colspan="18" class="p-12 text-center text-slate-400 font-semibold"><i class="fas fa-spinner fa-spin text-2xl mb-2 text-blue-500"></i><br>Loading dashboard data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Email Login Modal Popup -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-white">
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-user-lock text-blue-400 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold">User Authentication</h3>
+                <p class="text-xs text-slate-400 mt-1">Apna registered email address enter karein data dekhne ke liye.</p>
+            </div>
+            <form onsubmit="handleEmailSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
+                    <input type="email" id="modalEmailInput" required placeholder="example@ashishinterbuild.com" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-blue-500 transition-all">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-blue-600/30">
+                    Continue to Dashboard
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- MAIN CONTAINER -->
-    <div class="max-w-[1600px] mx-auto space-y-4">
-        
-        <!-- HEADER / CONTROLS -->
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap gap-4 items-center justify-between">
-            <div>
-                <h1 class="text-xl font-black tracking-wide text-white"><i class="fas fa-chart-line text-blue-500 mr-2"></i>EMPLOYEE PERFORMANCE METRICS</h1>
-                <p id="userDisplay" class="text-xs text-slate-400 mt-0.5">Logged in as: Loading...</p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-                <!-- Search Name -->
-                <input type="text" id="nameSearch" onkeyup="renderDashboard()" placeholder="Search Name..." 
-                       class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500">
-
-                <!-- Filter HOD -->
-                <select id="hodFilter" onchange="renderDashboard()" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none">
-                    <option value="">All HODs</option>
-                </select>
-
-                <!-- View Mode -->
-                <select id="viewMode" onchange="handleViewModeChange()" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-white focus:outline-none">
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                </select>
-
-                <!-- MultiSelect Dropdown -->
-                <div class="relative" id="multiSelectContainer">
-                    <button type="button" onclick="toggleMultiSelectMenu()" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-white flex items-center justify-between gap-2 min-w-[140px]">
-                        <span id="multiSelectLabel">Select Period</span>
-                        <i class="fas fa-chevron-down text-xs text-slate-400"></i>
-                    </button>
-
-                    <div id="multiSelectMenu" class="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 z-50 hidden">
-                        <input type="text" id="periodSearch" onkeyup="filterPeriodList()" placeholder="Search period..." class="w-full p-1.5 bg-slate-800 border border-slate-700 rounded text-xs text-white mb-2 focus:outline-none">
-                        
-                        <div class="flex justify-between text-xs mb-2 border-b border-slate-800 pb-2">
-                            <button onclick="selectAllPeriods()" class="text-blue-400 hover:underline">Select All</button>
-                            <button onclick="clearAllPeriods()" class="text-rose-400 hover:underline">Clear All</button>
-                        </div>
-
-                        <div id="periodOptionsList" class="max-h-48 overflow-y-auto space-y-1 text-xs">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Refresh Button -->
-                <button onclick="fetchData()" title="Refresh Data" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-white transition">
-                    <i id="refreshBtn" class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- METRICS TABLE -->
-        <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-x-auto shadow-xl">
-            <table class="w-full text-xs text-left border-collapse">
-                <thead>
-                    <!-- Header Row 1 -->
-                    <tr class="bg-slate-900 text-slate-300 font-bold border-b border-slate-700 text-center">
-                        <th class="p-3 text-left sticky-col bg-slate-900 min-w-[200px]">EMPLOYEE DETAILS</th>
-                        <th colspan="4" class="p-2 border-l border-slate-700 text-blue-400 bg-blue-950/30">FEEDER SHEET (FMS)</th>
-                        <th colspan="4" class="p-2 border-l border-slate-700 text-purple-400 bg-purple-950/30">CHECKLIST (CL)</th>
-                        <th colspan="3" class="p-2 border-l border-slate-700 text-emerald-400 bg-emerald-950/30">PM METRICS</th>
-                        <th colspan="3" class="p-2 border-l border-slate-700 text-teal-400 bg-teal-950/30">ACTIVITY METRICS</th>
-                        <th colspan="3" class="p-2 border-l border-slate-700 text-yellow-400 bg-yellow-950/30">OVERALL SCORE</th>
-                    </tr>
-                    <!-- Header Row 2 -->
-                    <tr class="bg-slate-800/80 text-slate-400 font-semibold border-b border-slate-700 text-center">
-                        <th class="p-2 sticky-col bg-slate-800">NAME / ROLE</th>
-                        
-                        <!-- FMS -->
-                        <th class="p-2 border-l border-slate-700">PLN</th>
-                        <th class="p-2">ACT</th>
-                        <th class="p-2 text-blue-400">%</th>
-                        <th class="p-2 text-rose-400">ND%</th>
-
-                        <!-- CL -->
-                        <th class="p-2 border-l border-slate-700">PLN</th>
-                        <th class="p-2">ACT</th>
-                        <th class="p-2 text-purple-400">%</th>
-                        <th class="p-2 text-rose-400">ND%</th>
-
-                        <!-- PM -->
-                        <th class="p-2 border-l border-slate-700">PLN</th>
-                        <th class="p-2">ACT</th>
-                        <th class="p-2 text-emerald-400">%</th>
-
-                        <!-- ACTIVITY -->
-                        <th class="p-2 border-l border-slate-700">PLN</th>
-                        <th class="p-2">ACT</th>
-                        <th class="p-2 text-teal-400">%</th>
-
-                        <!-- SCORE -->
-                        <th class="p-2 border-l border-slate-700">TOT PLN</th>
-                        <th class="p-2">TOT ACT</th>
-                        <th class="p-2 text-yellow-400">DONE %</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTable" class="divide-y divide-slate-700/50 bg-white text-slate-800">
-                    <!-- Dynamic Data Rows -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- SCRIPT LOGIC -->
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkR1MaE7-FPaRNmJIiP9EBmoJofI0CN12t7xZPeM262bjOq1vIZO0P9cW8SndpOzAw/exec';
-        let currentUserEmail = localStorage.getItem('user_dashboard_email') || "";
-        let db = { fms: [], cl: [], pm: [], activity: [], importDataRaw: [], hodList: [] };
-        let currentPeriodOptions = [];
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkR1MaE7-FPaRNmJIiP9EBmoJofI0CN12t7xZPeM262bjOq1vIZO0P9cW8SndpOzAw/exec';
+    let currentUserEmail = localStorage.getItem('user_dashboard_email') || "";
+    let db = { fms: [], cl: [], pm: [], activity: [], importDataRaw: [], hodList: [] };
+    let currentPeriodOptions = [];
 
-        function promptUserEmail() {
-            document.getElementById('modalEmailInput').value = currentUserEmail;
-            document.getElementById('loginModal').classList.remove('hidden');
+    function promptUserEmail() {
+        document.getElementById('modalEmailInput').value = currentUserEmail;
+        document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    function handleEmailSubmit(e) {
+        e.preventDefault();
+        const inputEmail = document.getElementById('modalEmailInput').value.trim().toLowerCase();
+        if(inputEmail) {
+            currentUserEmail = inputEmail;
+            localStorage.setItem('user_dashboard_email', currentUserEmail);
+            document.getElementById('loginModal').classList.add('hidden');
+            fetchData();
+        }
+    }
+
+    function fetchData(){
+        if(!currentUserEmail) {
+            promptUserEmail();
+            return;
         }
 
-        function handleEmailSubmit(e) {
-            e.preventDefault();
-            const inputEmail = document.getElementById('modalEmailInput').value.trim().toLowerCase();
-            if(inputEmail) {
-                currentUserEmail = inputEmail;
-                localStorage.setItem('user_dashboard_email', currentUserEmail);
-                document.getElementById('loginModal').classList.add('hidden');
-                fetchData();
-            }
-        }
-
-        function fetchData(){
-            if(!currentUserEmail) {
-                promptUserEmail();
-                return;
-            }
-
-            const btn = document.getElementById('refreshBtn');
-            if(btn) btn.classList.add('fa-spin');
-            
-            const oldScript = document.getElementById('jsonpScript');
-            if(oldScript) oldScript.remove();
-            
-            const script = document.createElement('script');
-            script.id = 'jsonpScript';
-            script.src = SCRIPT_URL + '?callback=handleData&email=' + encodeURIComponent(currentUserEmail) + '&ts=' + new Date().getTime();
-            document.body.appendChild(script);
-        }
-
-        function handleData(root) {
-            const btn = document.getElementById('refreshBtn');
+        const btn = document.getElementById('refreshBtn');
+        if(btn) btn.classList.add('fa-spin');
+        
+        const oldScript = document.getElementById('jsonpScript');
+        if(oldScript) oldScript.remove();
+        
+        const script = document.createElement('script');
+        script.id = 'jsonpScript';
+        script.onerror = function() {
             if(btn) btn.classList.remove('fa-spin');
+            alert('Failed to load data from server. Please check internet connection.');
+        };
+        script.src = SCRIPT_URL + '?callback=handleData&email=' + encodeURIComponent(currentUserEmail) + '&ts=' + new Date().getTime();
+        document.body.appendChild(script);
+    }
 
-            if(root.loginUser && root.loginUser !== 'guest' && root.loginUser !== 'unknown') {
-                currentUserEmail = root.loginUser;
-                localStorage.setItem('user_dashboard_email', currentUserEmail);
-            }
+    function handleData(root) {
+        const btn = document.getElementById('refreshBtn');
+        if(btn) btn.classList.remove('fa-spin');
 
-            document.getElementById('userDisplay').innerText = `Logged in as: ${currentUserEmail || 'Guest'}`;
-
-            db.fms = root.data["Feeder Sheet"] || [];
-            db.cl = root.data["CL"] || [];
-            db.pm = root.data["PM"] || [];
-            db.activity = root.data["Activity"] || [];
-            db.importDataRaw = root.data["Import Data"] || [];
-            db.hodList = root.hodList || [];
-
-            const hodSelect = document.getElementById('hodFilter');
-            hodSelect.innerHTML = '<option value="">All HODs</option>';
-            db.hodList.forEach(h => {
-                if(h) hodSelect.innerHTML += `<option value="${h}">${h}</option>`;
-            });
-
-            handleViewModeChange();
+        if(root.loginUser && root.loginUser !== 'guest' && root.loginUser !== 'unknown') {
+            currentUserEmail = root.loginUser;
+            localStorage.setItem('user_dashboard_email', currentUserEmail);
         }
 
-        function parseMonth(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            if(!isNaN(d.getTime())) {
-                return d.toLocaleString('en-US', { month: 'short', year: '2-digit' }).replace(/\s+/g, '-');
-            }
-            return String(dateStr).trim();
-        }
+        document.getElementById('userDisplay').innerText = `Logged in as: ${currentUserEmail || 'Guest'}`;
 
-        function parseYear(dateStr) {
-            if(!dateStr) return '';
-            const str = String(dateStr);
-            const match = str.match(/(20\d\d|\b\d\d\b)/);
-            if (match) {
-                let yr = match[0];
-                return yr.length === 2 ? '20' + yr : yr;
-            }
-            const d = new Date(dateStr);
-            if(!isNaN(d.getTime())) return String(d.getFullYear());
-            return '';
-        }
+        db.fms = root.data["Feeder Sheet"] || [];
+        db.cl = root.data["CL"] || [];
+        db.pm = root.data["PM"] || [];
+        db.activity = root.data["Activity"] || [];
+        db.importDataRaw = root.data["Import Data"] || [];
+        db.hodList = root.hodList || [];
 
-        function getPreviousWeek() {
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const pastDaysOfYear = (now - startOfYear) / 86400000;
-            const currentWeek = Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
-            return currentWeek > 1 ? currentWeek - 1 : currentWeek;
-        }
-
-        function toggleMultiSelectMenu() {
-            document.getElementById('multiSelectMenu').classList.toggle('hidden');
-        }
-
-        document.addEventListener('click', function(e) {
-            const container = document.getElementById('multiSelectContainer');
-            if(container && !container.contains(e.target)) {
-                document.getElementById('multiSelectMenu').classList.add('hidden');
-            }
+        const hodSelect = document.getElementById('hodFilter');
+        hodSelect.innerHTML = '<option value="">All HODs</option>';
+        db.hodList.forEach(h => {
+            if(h) hodSelect.innerHTML += `<option value="${h}">${h}</option>`;
         });
 
-        function handleViewModeChange() {
-            const mode = document.getElementById('viewMode').value;
-            currentPeriodOptions = [];
+        handleViewModeChange();
+    }
 
-            const monthMap = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+    function parseMonth(dateStr) {
+        if(!dateStr) return '';
+        const d = new Date(dateStr);
+        if(!isNaN(d.getTime())) {
+            return d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+        }
+        return String(dateStr).trim();
+    }
 
+    function parseYear(dateStr) {
+        if(!dateStr) return '';
+        const str = String(dateStr);
+        const match = str.match(/(20\d\d|\b\d\d\b)/);
+        if (match) {
+            let yr = match[0];
+            return yr.length === 2 ? '20' + yr : yr;
+        }
+        const d = new Date(dateStr);
+        if(!isNaN(d.getTime())) return String(d.getFullYear());
+        return '';
+    }
+
+    function getPreviousWeek() {
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const pastDaysOfYear = (now - startOfYear) / 86400000;
+        const currentWeek = Math.ceil((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+        return currentWeek > 1 ? currentWeek - 1 : currentWeek;
+    }
+
+    function toggleMultiSelectMenu(e) {
+        if(e) e.stopPropagation();
+        document.getElementById('multiSelectMenu').classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('multiSelectContainer');
+        if(container && !container.contains(e.target)) {
+            document.getElementById('multiSelectMenu').classList.add('hidden');
+        }
+    });
+
+    function handleViewModeChange() {
+        const mode = document.getElementById('viewMode').value;
+        currentPeriodOptions = [];
+
+        const monthMap = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+
+        if(mode === 'weekly') {
+            let weeks = new Set();
+            [...db.fms, ...db.cl, ...db.pm, ...db.activity].forEach(i => {
+                const w = parseInt(i.weekNo);
+                if(!isNaN(w) && w > 0) weeks.add(w);
+            });
+            let sortedWeeks = Array.from(weeks).sort((a,b) => b - a);
+            currentPeriodOptions = sortedWeeks.map(w => ({ val: String(w), label: `Week ${w}` }));
+
+        } else if(mode === 'monthly') {
+            let months = new Set();
+            [...db.pm, ...db.activity].forEach(i => { if(i.month) months.add(i.month); });
+            [...db.fms, ...db.cl].forEach(i => {
+                const m = parseMonth(i.plannedDate);
+                if(m) months.add(m);
+            });
+
+            let sortedMonths = Array.from(months).filter(Boolean).map(m => m.trim().replace(/\s+/g, '-'));
+            sortedMonths = [...new Set(sortedMonths)];
+
+            sortedMonths.sort((a, b) => {
+                let partsA = a.split(/[- ]/);
+                let partsB = b.split(/[- ]/);
+                let mA = monthMap[partsA[0].toLowerCase().substring(0, 3)] ?? 0;
+                let mB = monthMap[partsB[0].toLowerCase().substring(0, 3)] ?? 0;
+                let yA = parseInt(partsA[1] || '0');
+                let yB = parseInt(partsB[1] || '0');
+                if(yA.toString().length === 2) yA += 2000;
+                if(yB.toString().length === 2) yB += 2000;
+
+                if (yA !== yB) return yB - yA; 
+                return mB - mA;              
+            });
+
+            currentPeriodOptions = sortedMonths.map(m => ({ val: m, label: m }));
+
+        } else if(mode === 'yearly') {
+            let years = new Set();
+            [...db.fms, ...db.cl, ...db.pm, ...db.activity].forEach(i => {
+                const y = parseYear(i.plannedDate || i.month);
+                if(y && y.length === 4) years.add(y);
+            });
+
+            currentPeriodOptions = Array.from(years).sort((a,b) => b - a).map(y => ({ val: y, label: `Year ${y}` }));
+        }
+
+        buildPeriodDropdownOptions();
+
+        if(currentPeriodOptions.length > 0) {
             if(mode === 'weekly') {
-                let weeks = new Set();
-                [...db.fms, ...db.cl, ...db.pm, ...db.activity].forEach(i => {
-                    const w = parseInt(String(i.weekNo).replace(/\D/g, ''));
-                    if(!isNaN(w) && w > 0) weeks.add(w);
-                });
-                let sortedWeeks = Array.from(weeks).sort((a,b) => b - a);
-                currentPeriodOptions = sortedWeeks.map(w => ({ val: String(w), label: `Week ${w}` }));
-
-            } else if(mode === 'monthly') {
-                let months = new Set();
-                [...db.pm, ...db.activity].forEach(i => { if(i.month) months.add(cleanMonthStr(i.month)); });
-                [...db.fms, ...db.cl].forEach(i => {
-                    const m = parseMonth(i.plannedDate);
-                    if(m) months.add(cleanMonthStr(m));
-                });
-
-                let sortedMonths = Array.from(months).filter(Boolean);
-
-                sortedMonths.sort((a, b) => {
-                    let partsA = a.split(/[- ]/);
-                    let partsB = b.split(/[- ]/);
-                    let mA = monthMap[partsA[0].toLowerCase().substring(0, 3)] ?? 0;
-                    let mB = monthMap[partsB[0].toLowerCase().substring(0, 3)] ?? 0;
-                    let yA = parseInt(partsA[1] || '0');
-                    let yB = parseInt(partsB[1] || '0');
-                    if(yA.toString().length === 2) yA += 2000;
-                    if(yB.toString().length === 2) yB += 2000;
-
-                    if (yA !== yB) return yB - yA; 
-                    return mB - mA;             
-                });
-
-                currentPeriodOptions = sortedMonths.map(m => ({ val: m, label: m }));
-
-            } else if(mode === 'yearly') {
-                let years = new Set();
-                [...db.fms, ...db.cl, ...db.pm, ...db.activity].forEach(i => {
-                    const y = parseYear(i.plannedDate || i.month);
-                    if(y && y.length === 4) years.add(y);
-                });
-
-                currentPeriodOptions = Array.from(years).sort((a,b) => b - a).map(y => ({ val: y, label: `Year ${y}` }));
-            }
-
-            buildPeriodDropdownOptions();
-
-            if(currentPeriodOptions.length > 0) {
-                if(mode === 'weekly') {
-                    const targetWeek = String(getPreviousWeek());
-                    const targetInput = document.querySelector(`#periodOptionsList input[value="${targetWeek}"]`);
-                    if(targetInput) {
-                        targetInput.checked = true;
-                    } else {
-                        const firstInput = document.querySelector('#periodOptionsList input');
-                        if(firstInput) firstInput.checked = true;
-                    }
+                const targetWeek = String(getPreviousWeek());
+                const targetInput = document.querySelector(`#periodOptionsList input[value="${targetWeek}"]`);
+                if(targetInput) {
+                    targetInput.checked = true;
                 } else {
                     const firstInput = document.querySelector('#periodOptionsList input');
                     if(firstInput) firstInput.checked = true;
                 }
-            }
-            
-            updateMultiSelectLabel();
-            renderDashboard();
-        }
-
-        function buildPeriodDropdownOptions() {
-            const container = document.getElementById('periodOptionsList');
-            container.innerHTML = '';
-            currentPeriodOptions.forEach(opt => {
-                container.innerHTML += `
-                    <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-800 rounded cursor-pointer text-slate-200">
-                        <input type="checkbox" value="${opt.val}" onchange="onPeriodCheckboxChange()" class="rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-0">
-                        <span>${opt.label}</span>
-                    </label>
-                `;
-            });
-        }
-
-        function filterPeriodList() {
-            const query = document.getElementById('periodSearch').value.toLowerCase();
-            const labels = document.querySelectorAll('#periodOptionsList label');
-            labels.forEach(lbl => {
-                const txt = lbl.innerText.toLowerCase();
-                lbl.style.display = txt.includes(query) ? 'flex' : 'none';
-            });
-        }
-
-        function selectAllPeriods() {
-            document.querySelectorAll('#periodOptionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
-            onPeriodCheckboxChange();
-        }
-
-        function clearAllPeriods() {
-            document.querySelectorAll('#periodOptionsList input[type="checkbox"]').forEach(cb => cb.checked = false);
-            onPeriodCheckboxChange();
-        }
-
-        function onPeriodCheckboxChange() {
-            updateMultiSelectLabel();
-            renderDashboard();
-        }
-
-        function getSelectedPeriods() {
-            const checked = document.querySelectorAll('#periodOptionsList input[type="checkbox"]:checked');
-            return Array.from(checked).map(cb => cb.value);
-        }
-
-        function updateMultiSelectLabel() {
-            const selected = getSelectedPeriods();
-            const labelEl = document.getElementById('multiSelectLabel');
-            if(selected.length === 0) {
-                labelEl.innerText = "Select Period";
-            } else if(selected.length === 1) {
-                const match = currentPeriodOptions.find(o => o.val === selected[0]);
-                labelEl.innerText = match ? match.label : selected[0];
             } else {
-                labelEl.innerText = `${selected.length} Selected`;
+                const firstInput = document.querySelector('#periodOptionsList input');
+                if(firstInput) firstInput.checked = true;
             }
         }
+        
+        updateMultiSelectLabel();
+        renderDashboard();
+    }
 
-        function normalizeName(name){ 
-            return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim(); 
+    function buildPeriodDropdownOptions() {
+        const container = document.getElementById('periodOptionsList');
+        container.innerHTML = '';
+        currentPeriodOptions.forEach(opt => {
+            container.innerHTML += `
+                <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-800 rounded cursor-pointer text-slate-200">
+                    <input type="checkbox" value="${opt.val}" onchange="onPeriodCheckboxChange()" class="rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-0">
+                    <span>${opt.label}</span>
+                </label>
+            `;
+        });
+    }
+
+    function filterPeriodList() {
+        const query = document.getElementById('periodSearch').value.toLowerCase();
+        const labels = document.querySelectorAll('#periodOptionsList label');
+        labels.forEach(lbl => {
+            const txt = lbl.innerText.toLowerCase();
+            lbl.style.display = txt.includes(query) ? 'flex' : 'none';
+        });
+    }
+
+    function selectAllPeriods() {
+        document.querySelectorAll('#periodOptionsList input[type="checkbox"]').forEach(cb => cb.checked = true);
+        onPeriodCheckboxChange();
+    }
+
+    function clearAllPeriods() {
+        document.querySelectorAll('#periodOptionsList input[type="checkbox"]').forEach(cb => cb.checked = false);
+        onPeriodCheckboxChange();
+    }
+
+    function onPeriodCheckboxChange() {
+        updateMultiSelectLabel();
+        renderDashboard();
+    }
+
+    function getSelectedPeriods() {
+        const checked = document.querySelectorAll('#periodOptionsList input[type="checkbox"]:checked');
+        return Array.from(checked).map(cb => cb.value);
+    }
+
+    function updateMultiSelectLabel() {
+        const selected = getSelectedPeriods();
+        const labelEl = document.getElementById('multiSelectLabel');
+        if(selected.length === 0) {
+            labelEl.innerText = "Select Period";
+        } else if(selected.length === 1) {
+            const match = currentPeriodOptions.find(o => o.val === selected[0]);
+            labelEl.innerText = match ? match.label : selected[0];
+        } else {
+            labelEl.innerText = `${selected.length} Selected`;
         }
+    }
 
-        function getMonthFromWeek(weekNo) {
-            if (!weekNo) return '';
-            let w = parseInt(String(weekNo).replace(/\D/g, ''));
-            if (isNaN(w) || w < 1 || w > 53) return '';
-            let d = new Date(2026, 0, 1 + (w - 1) * 7);
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            return `${months[d.getMonth()]}-26`;
-        }
+    function normalizeName(name){ 
+        return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim(); 
+    }
 
-        function cleanMonthStr(val) {
-            if (!val) return '';
-            let str = String(val).trim();
-            let m = str.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s-]*(\d{2,4})?/i);
-            if (m) {
-                let yr = m[2] ? m[2].slice(-2) : '26';
-                let monthName = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-                return `${monthName}-${yr}`;
+    function renderDashboard() {
+        const searchVal = document.getElementById('nameSearch').value.toLowerCase().trim();
+        const selectedHod = document.getElementById('hodFilter').value;
+        const mode = document.getElementById('viewMode').value;
+        const selectedPeriods = getSelectedPeriods();
+
+        let finalMap = {};
+        const cleanStr = (val) => String(val || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+        // 1. Import Data Sync
+        db.importDataRaw.forEach(row => {
+            const rawName = row.doerName;
+            const normName = normalizeName(rawName);
+            if (!normName) return;
+
+            const matchesHodFilter = !selectedHod || row.hod === selectedHod;
+            const matchesSearch = !searchVal || cleanStr(rawName).includes(searchVal);
+
+            if (matchesHodFilter && matchesSearch) {
+                finalMap[normName] = { 
+                    name: rawName, 
+                    email: row.email, 
+                    hod: row.hod, 
+                    desig: row.designation,
+                    fP: 0, fA: 0, cP: 0, cA: 0, pmP: 0, pmA: 0, actP: 0, actA: 0 
+                };
             }
-            return str;
+        });
+
+        // 2. User Matching Logic
+        const findUserKey = (doerName, doerEmail) => {
+            const normName = normalizeName(doerName);
+            const normEmail = cleanStr(doerEmail);
+
+            if (normName && finalMap[normName]) return normName;
+
+            for (let key in finalMap) {
+                let u = finalMap[key];
+                let uEmail = cleanStr(u.email);
+                let uName = cleanStr(u.name);
+
+                if (normEmail && uEmail && (uEmail === normEmail || normEmail.includes(uEmail) || uEmail.includes(normEmail))) {
+                    return key;
+                }
+                if (normName && (uName === normName || uName.includes(normName) || normName.includes(uName))) {
+                    return key;
+                }
+            }
+            return null;
+        };
+
+        function getWeekNum(val) {
+            if (!val && val !== 0) return '';
+            let match = String(val).match(/\d+/);
+            return match ? match[0] : '';
         }
 
-        function renderDashboard(){
-            const searchVal = document.getElementById('nameSearch').value.toLowerCase().trim();
-            const selectedHod = document.getElementById('hodFilter').value;
-            const mode = document.getElementById('viewMode').value;
-            const selectedPeriods = getSelectedPeriods();
+        // 3. Period Filter Logic (FIXED FOR YEARLY VIEW TOO)
+        const matchesPeriod = (itemWeek, itemDate, itemMonth) => {
+            if (!selectedPeriods || selectedPeriods.length === 0) return true;
 
-            let finalMap = {};
+            if (mode === 'weekly') {
+                let itemW = getWeekNum(itemWeek);
+                if (!itemW) return false;
+                return selectedPeriods.some(sp => getWeekNum(sp) === itemW);
+            } else if (mode === 'monthly') {
+                let mStr = cleanStr(itemMonth || parseMonth(itemDate));
+                return selectedPeriods.some(p => cleanStr(p) === mStr || cleanStr(p).includes(mStr));
+            } else if (mode === 'yearly') {
+                let yStr = parseYear(itemDate || itemMonth);
+                return selectedPeriods.includes(yStr);
+            }
+            return true;
+        };
 
-            db.importDataRaw.forEach(row => {
-                const rawName = row.doerName;
-                const normName = normalizeName(rawName);
-                if(!normName) return;
+        // 4. Aggregation Logic
+        (db.fms || []).forEach(i => {
+            const key = findUserKey(i.doerName, "");
+            if (key && matchesPeriod(i.weekNo, i.plannedDate, null)) {
+                finalMap[key].fP++;
+                if (i.status === 'on time') finalMap[key].fA++;
+            }
+        });
 
-                const matchesHodFilter = !selectedHod || row.hod === selectedHod;
-                const matchesSearch = !searchVal || rawName.toLowerCase().includes(searchVal);
+        (db.cl || []).forEach(i => {
+            const key = findUserKey(i.doerName, "");
+            if (key && matchesPeriod(i.weekNo, i.plannedDate, null)) {
+                finalMap[key].cP += Number(i.planned) || 0;
+                finalMap[key].cA += Number(i.done) || 0;
+            }
+        });
 
-                if(matchesHodFilter && matchesSearch){
-                    finalMap[normName] = { 
-                        name: rawName, email: row.email, hod: row.hod, desig: row.designation,
-                        fP:0, fA:0, cP:0, cA:0, pmP:0, pmA:0, actP:0, actA:0 
-                    };
-                }
-            });
+        (db.pm || []).forEach(i => {
+            const key = findUserKey(i.doerName, i.doerEmail);
+            if (key && matchesPeriod(i.weekNo, null, i.month)) {
+                finalMap[key].pmP += Number(i.plannedAmount) || 0;
+                finalMap[key].pmA += Number(i.actAmount) || 0;
+            }
+        });
 
-            const findUserKey = (doerName, doerEmail) => {
-                const normName = normalizeName(doerName);
-                const normEmail = String(doerEmail || '').toLowerCase().trim();
+        (db.activity || []).forEach(i => {
+            const key = findUserKey(i.doerName, i.doerEmail);
+            if (key && matchesPeriod(i.weekNo, null, i.month)) {
+                finalMap[key].actP += Number(i.plannedAmount) || 0;
+                finalMap[key].actA += Number(i.actAmount) || 0;
+            }
+        });
 
-                if (normName && finalMap[normName]) return normName;
+        const calcPct = (a, p) => p > 0 ? ((a / p) * 100).toFixed(1) : '0.0';
+        const calcND = (a, p) => p > 0 ? (100 - ((a / p) * 100)).toFixed(1) : '0.0';
 
-                if (normEmail) {
-                    for (let key in finalMap) {
-                        if (finalMap[key].email && finalMap[key].email.toLowerCase().trim() === normEmail) {
-                            return key;
-                        }
-                    }
-                }
-                return null;
-            };
+        // 5. Render HTML
+        const html = Object.values(finalMap).map(r => {
+            const totalP = r.fP + r.cP + r.pmP + r.actP;
+            const totalA = r.fA + r.cA + r.pmA + r.actA;
 
-            const matchesPeriod = (itemWeek, itemDate, itemMonth) => {
-                if (selectedPeriods.length === 0) return true;
+            const scoreVal = totalP > 0 ? (totalA / totalP) * 100 : 0;
+            const scorePct = scoreVal.toFixed(1);
 
-                const cleanItemWeek = itemWeek ? String(itemWeek).replace(/\D/g, '') : '';
+            let barColor = scoreVal >= 80 ? 'bg-emerald-500' : scoreVal >= 60 ? 'bg-yellow-500' : 'bg-red-500';
+            let textColor = scoreVal >= 80 ? 'text-emerald-600' : scoreVal >= 60 ? 'text-yellow-600' : 'text-red-600';
 
-                if (mode === 'weekly') {
-                    return selectedPeriods.some(sp => {
-                        const cleanSp = String(sp).replace(/\D/g, '');
-                        return cleanSp === cleanItemWeek;
-                    });
-                } else if (mode === 'monthly') {
-                    let monthFromWeek = cleanItemWeek ? getMonthFromWeek(cleanItemWeek) : '';
-                    let monthFromDate = itemDate ? cleanMonthStr(parseMonth(itemDate)) : '';
-                    let monthFromMonth = itemMonth ? cleanMonthStr(itemMonth) : '';
+            return `
+            <tr>
+                <td class="sticky-col font-bold py-2.5">
+                    <div class="text-slate-900 text-[13px] font-bold">${r.name}</div>
+                    <div class="text-[10px] text-slate-400 font-normal">
+                        ${r.email || 'N/A'} | ${r.desig || 'Staff'}
+                    </div>
+                    <div class="text-[10px] text-blue-600 font-mono font-medium mt-0.5">
+                        <i class="fas fa-user-tie text-[9px] mr-1"></i>
+                        HOD: ${r.hod || 'N/A'}
+                    </div>
+                </td>
 
-                    return selectedPeriods.some(p => {
-                        let sel = cleanMonthStr(p);
-                        return (
-                            (sel && sel === monthFromWeek) ||
-                            (sel && sel === monthFromDate) ||
-                            (sel && sel === monthFromMonth)
-                        );
-                    });
-                } else if (mode === 'yearly') {
-                    return true;
-                }
-                return true;
-            };
+                <!-- FMS -->
+                <td class="text-center">${r.fP}</td>
+                <td class="text-center">${r.fA}</td>
+                <td class="text-blue-600 font-bold text-center bg-fms-cell">${calcPct(r.fA, r.fP)}%</td>
+                <td class="text-rose-500 font-semibold text-center">${calcND(r.fA, r.fP)}%</td>
 
-            // AGGREGATION LOOPS
-            db.fms.forEach(i => {
-                const key = findUserKey(i.doerName, i.doerEmail);
-                if(key && matchesPeriod(i.weekNo, i.plannedDate, null)){
-                    finalMap[key].fP++;
-                    if(i.status === 'on time') finalMap[key].fA++;
-                }
-            });
+                <!-- CL -->
+                <td class="text-center">${r.cP}</td>
+                <td class="text-center">${r.cA}</td>
+                <td class="text-purple-600 font-bold text-center bg-cl-cell">${calcPct(r.cA, r.cP)}%</td>
+                <td class="text-rose-500 font-semibold text-center">${calcND(r.cA, r.cP)}%</td>
 
-            db.cl.forEach(i => {
-                const key = findUserKey(i.doerName, i.doerEmail);
-                if(key && matchesPeriod(i.weekNo, i.plannedDate, null)){
-                    finalMap[key].cP += Number(i.planned) || 0;
-                    finalMap[key].cA += Number(i.done) || 0;
-                }
-            });
+                <!-- PM -->
+                <td class="text-center font-semibold text-emerald-900">${r.pmP.toLocaleString()}</td>
+                <td class="text-center font-semibold text-emerald-900">${r.pmA.toLocaleString()}</td>
+                <td class="text-emerald-600 font-bold text-center bg-pm-cell">${calcPct(r.pmA, r.pmP)}%</td>
 
-            db.pm.forEach(i => {
-                const key = findUserKey(i.doerName, i.doerEmail);
-                if(key && matchesPeriod(i.weekNo, null, i.month)){
-                    finalMap[key].pmP += Number(i.plannedAmount) || 0;
-                    finalMap[key].pmA += Number(i.actAmount) || 0;
-                }
-            });
+                <!-- ACTIVITY -->
+                <td class="text-center font-semibold text-teal-900">${r.actP.toLocaleString()}</td>
+                <td class="text-center font-semibold text-teal-900">${r.actA.toLocaleString()}</td>
+                <td class="text-teal-600 font-bold text-center bg-act-cell">${calcPct(r.actA, r.actP)}%</td>
 
-            db.activity.forEach(i => {
-                const key = findUserKey(i.doerName, i.doerEmail);
-                if(key && matchesPeriod(i.weekNo, null, i.month)){
-                    finalMap[key].actP += Number(i.plannedAmount) || 0;
-                    finalMap[key].actA += Number(i.actAmount) || 0;
-                }
-            });
+                <!-- OVERALL SCORE -->
+                <td class="text-center font-bold bg-slate-100">${totalP.toLocaleString()}</td>
+                <td class="text-center font-bold bg-slate-100">${totalA.toLocaleString()}</td>
+                <td class="text-center font-black ${textColor} bg-score-cell text-[13px] p-2">
+                    <div>${scorePct}%</div>
+                    <div class="w-full bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                        <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width:${Math.min(scoreVal,100)}%;"></div>
+                    </div>
+                </td>
+            </tr>
+            `;
+        }).join('');
 
-            const calcPct = (a,p) => p > 0 ? ((a/p)*100).toFixed(1) : '0.0';
-            const calcND = (a,p) => p > 0 ? (100 - ((a/p)*100)).toFixed(1) : '0.0';
+        document.getElementById('dataTable').innerHTML = html || `<tr><td colspan="18" class="p-8 text-center text-slate-400 font-semibold">No records found or Access Restricted.</td></tr>`;
+    }
 
-            const html = Object.values(finalMap).map(r => {
-                const totalP = r.fP + r.cP;
-                const totalA = r.fA + r.cA;
-                const scoreVal = totalP > 0 ? (totalA / totalP) * 100 : 0;
-                const scorePct = scoreVal.toFixed(1);
-
-                let barColor = 'bg-red-500';
-                let textColor = 'text-red-600';
-
-                if (scoreVal >= 80) {
-                    barColor = 'bg-emerald-500';
-                    textColor = 'text-emerald-600';
-                } else if (scoreVal >= 60) {
-                    barColor = 'bg-yellow-500';
-                    textColor = 'text-yellow-600';
-                }
-
-                return `
-                    <tr>
-                        <td class="sticky-col font-bold py-2.5">
-                            <div class="text-slate-900 text-[13px] font-bold">${r.name}</div>
-                            <div class="text-[10px] text-slate-400 font-normal">${r.email || 'N/A'} | ${r.desig || 'Staff'}</div>
-                            <div class="text-[10px] text-blue-600 font-mono font-medium mt-0.5"><i class="fas fa-user-tie text-[9px] mr-1"></i>HOD: ${r.hod || 'N/A'}</div>
-                        </td>
-
-                        <!-- FMS -->
-                        <td class="text-center font-medium">${r.fP}</td>
-                        <td class="text-center font-medium">${r.fA}</td>
-                        <td class="text-blue-600 font-bold text-center bg-fms-cell">${calcPct(r.fA, r.fP)}%</td>
-                        <td class="text-rose-500 font-semibold text-center">${calcND(r.fA, r.fP)}%</td>
-
-                        <!-- Checklist -->
-                        <td class="text-center font-medium">${r.cP}</td>
-                        <td class="text-center font-medium">${r.cA}</td>
-                        <td class="text-purple-600 font-bold text-center bg-cl-cell">${calcPct(r.cA, r.cP)}%</td>
-                        <td class="text-rose-500 font-semibold text-center">${calcND(r.cA, r.cP)}%</td>
-
-                        <!-- PM -->
-                        <td class="text-center font-semibold text-emerald-900">${r.pmP.toLocaleString()}</td>
-                        <td class="text-center font-semibold text-emerald-900">${r.pmA.toLocaleString()}</td>
-                        <td class="text-emerald-600 font-bold text-center bg-pm-cell">${calcPct(r.pmA, r.pmP)}%</td>
-
-                        <!-- Activity -->
-                        <td class="text-center font-semibold text-teal-900">${r.actP.toLocaleString()}</td>
-                        <td class="text-center font-semibold text-teal-900">${r.actA.toLocaleString()}</td>
-                        <td class="text-teal-600 font-bold text-center bg-act-cell">${calcPct(r.actA, r.actP)}%</td>
-
-                        <!-- Score -->
-                        <td class="text-center font-bold bg-slate-100">${totalP}</td>
-                        <td class="text-center font-bold bg-slate-100">${totalA}</td>
-
-                        <!-- OVERALL SCORE -->
-                        <td class="text-center font-black ${textColor} bg-score-cell text-[13px] p-2">
-                            <div>${scorePct}%</div>
-                            <div class="w-full bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
-                                <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${scoreVal > 100 ? 100 : scoreVal}%;"></div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById('dataTable').innerHTML = html || `<tr><td colspan="18" class="p-8 text-center text-slate-400 font-semibold">No records found or Access Restricted.</td></tr>`;
-        }
-
-        window.onload = fetchData;
+    window.onload = fetchData;
     </script>
 </body>
 </html>
